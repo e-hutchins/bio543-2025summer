@@ -1,3 +1,10 @@
+#repo specific files
+exams/
+final_challenge/
+
+#if you use a Mac
+.DS_store
+
 # History files
 .Rhistory
 .Rapp.history

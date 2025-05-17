@@ -1,0 +1,110 @@
+Species,length_bp,id_human,lineage,mammal_order
+Abingdon island giant tortoise (Chelonoidis abingdonii),3835,0.55,chelarchosauria,NA
+Algerian mouse (Mus spretus),13405,0.99,mammal,rodentia
+Alpaca (Vicugna pacos),2178,0.66,mammal,cetartriodactyla
+Alpine marmot (Marmota marmota marmota),419,0.76,mammal,rodentia
+American bison (Bison bison bison),1541,0.99,mammal,cetartriodactyla
+American black bear (Ursus americanus),1271,0.66,mammal,carnivore
+American mink (Neovison vison),1506,0.39,mammal,carnivore
+Arabian camel (Camelus dromedarius),2145,0.45,mammal,cetartriodactyla
+Arctic ground squirrel (Urocitellus parryii),1976,0.34,mammal,rodentia
+Argentine black and white tegu (Salvator merianae),12007,0.48,squamate,NA
+Armadillo (Dasypus novemcinctus),1537,0.20,mammal,other
+Australian saltwater crocodile (Crocodylus porosus),1243,0.87,chelarchosauria,NA
+Beluga whale (Delphinapterus leucas),2120,0.81,mammal,cetartriodactyla
+Black snub-nosed monkey (Rhinopithecus bieti),1917,0.75,mammal,primates
+Blue whale (Balaenoptera musculus),1982,0.93,mammal,cetartriodactyla
+Blue-ringed sea krait (Laticauda laticaudata),704,0.42,squamate,NA
+Bolivian squirrel monkey (Saimiri boliviensis boliviensis),1941,0.71,mammal,primates
+Bonobo (Pan paniscus),1815,0.38,mammal,primates
+Cat (Felis catus),1981,0.38,mammal,carnivore
+Chacoan peccary (Catagonus wagneri),2047,0.64,mammal,cetartriodactyla
+Chimpanzee (Pan troglodytes),2282,0.75,mammal,primates
+Chinese hamster CHOK1GS (Cricetulus griseus),1564,0.45,mammal,rodentia
+Chinese softshell turtle (Pelodiscus sinensis),2411,0.79,chelarchosauria,NA
+Collared flycatcher (Ficedula albicollis),2600,0.42,chelarchosauria,NA
+Common canary (Serinus canaria),3466,0.63,chelarchosauria,NA
+Common wall lizard (Podarcis muralis),9112,0.66,squamate,NA
+Coquerel's sifaka (Propithecus coquereli),1777,0.66,mammal,primates
+Cow (Bos taurus),1851,0.21,mammal,cetartriodactyla
+Crab-eating macaque (Macaca fascicularis),1589,0.39,mammal,primates
+Degu (Octodon degus),1175,0.74,mammal,rodentia
+Dingo (Canis lupus dingo),2100,0.74,mammal,carnivore
+Dog (Canis lupus familiaris),2290,0.70,mammal,carnivore
+Dolphin (Tursiops truncatus),1675,0.77,mammal,cetartriodactyla
+Domestic yak (Bos grunniens),1744,0.84,mammal,cetartriodactyla
+Donkey (Equus asinus),3639,0.77,mammal,other
+Drill (Mandrillus leucophaeus),2425,0.45,mammal,primates
+Duck (Anas platyrhynchos platyrhynchos),4708,0.52,chelarchosauria,NA
+Eastern brown snake (Pseudonaja textilis),11837,0.95,squamate,NA
+Elephant (Loxodonta africana),1536,0.64,mammal,other
+Eurasian red squirrel (Sciurus vulgaris),1727,0.96,mammal,rodentia
+Ferret (Mustela putorius furo),2296,0.46,mammal,carnivore
+Giant panda (Ailuropoda melanoleuca),1514,0.98,mammal,carnivore
+Gibbon (Nomascus leucogenys),2311,0.36,mammal,primates
+Goat (Capra hircus),1550,0.77,mammal,cetartriodactyla
+Golden eagle (Aquila chrysaetos chrysaetos),3343,0.86,chelarchosauria,NA
+Golden Hamster (Mesocricetus auratus),1583,0.68,mammal,rodentia
+Golden snub-nosed monkey (Rhinopithecus roxellana),1857,0.38,mammal,primates
+Goodes thornscrub tortoise (Gopherus evgoodei),610,0.96,chelarchosauria,NA
+Gorilla (Gorilla gorilla gorilla),2278,0.69,mammal,primates
+Great Tit (Parus major),2553,0.75,chelarchosauria,NA
+Greater bamboo lemur (Prolemur simus),1592,0.75,mammal,primates
+Greater horseshoe bat (Rhinolophus ferrumequinum),1846,0.43,mammal,other
+Green anole (Anolis carolinensis),9282,0.86,squamate,NA
+Guinea Pig (Cavia porcellus),6048,0.67,mammal,rodentia
+Hedgehog (Erinaceus europaeus),1052,0.40,mammal,other
+Horse (Equus caballus),8145,0.44,mammal,other
+Hyrax (Procavia capensis),1647,0.33,mammal,other
+Indian cobra (Naja naja),10051,0.56,squamate,NA
+Japanese quail (Coturnix japonica),1459,0.89,chelarchosauria,NA
+Kakapo (Strigops habroptila),5073,0.77,chelarchosauria,NA
+Kangaroo rat (Dipodomys ordii),1741,0.83,mammal,rodentia
+Leopard (Panthera pardus),3458,0.88,mammal,carnivore
+Lesser Egyptian jerboa (Jaculus jaculus),1517,0.81,mammal,rodentia
+Lion (Panthera leo),1599,0.75,mammal,carnivore
+Long-tailed chinchilla (Chinchilla lanigera),1018,0.70,mammal,rodentia
+Ma's night monkey (Aotus nancymaae),1583,0.86,mammal,primates
+Macaque (Macaca mulatta),1589,0.95,mammal,primates
+Mainland tiger snake (Notechis scutatus),9182,0.75,squamate,NA
+Medium ground-finch (Geospiza fortis),3793,0.59,chelarchosauria,NA
+Megabat (Pteropus vampyrus),1569,0.39,mammal,other
+Microbat (Myotis lucifugus),2029,0.47,mammal,other
+Mouse (Mus musculus),13518,0.57,mammal,rodentia
+Mouse Lemur (Microcebus murinus),1804,0.72,mammal,primates
+Naked mole-rat female (Heterocephalus glaber),2304,0.81,mammal,rodentia
+Narwhal (Monodon monoceros),2157,0.63,mammal,cetartriodactyla
+Northern American deer mouse (Peromyscus maniculatus bairdii),1565,0.66,mammal,rodentia
+Olive baboon (Papio anubis),1589,0.77,mammal,primates
+Painted turtle (Chrysemys picta bellii),9141,0.77,chelarchosauria,NA
+Panamanian white-faced capuchin (Cebus imitator),1915,0.65,mammal,primates
+Pig (Sus scrofa),2273,0.92,mammal,cetartriodactyla
+Pig-tailed macaque (Macaca nemestrina),1916,0.40,mammal,primates
+Pika (Ochotona princeps),5818,0.88,mammal,rodentia
+Pink-footed goose (Anser brachyrhynchus),1760,0.73,chelarchosauria,NA
+Prairie vole (Microtus ochrogaster),1861,0.73,mammal,rodentia
+Rabbit (Oryctolagus cuniculus),407,0.95,mammal,other
+Red fox (Vulpes vulpes),1531,0.70,mammal,carnivore
+Ryukyu mouse (Mus caroli),12887,0.42,mammal,rodentia
+Sheep (Ovis aries),2236,0.64,mammal,cetartriodactyla
+Shrew (Sorex araneus),1908,0.79,mammal,other
+Shrew mouse (Mus pahari),12517,0.90,mammal,rodentia
+Siberian musk deer (Moschus moschiferus),2262,0.63,mammal,cetartriodactyla
+Sloth (Choloepus hoffmanni),1548,0.37,mammal,other
+Sooty mangabey (Cercocebus atys),1916,0.60,mammal,primates
+Sperm whale (Physeter catodon),1860,0.69,mammal,cetartriodactyla
+Squirrel (Ictidomys tridecemlineatus),3066,0.75,mammal,rodentia
+Steppe mouse (Mus spicilegus),1769,0.80,mammal,rodentia
+Sumatran orangutan (Pongo abelii),1959,0.95,mammal,primates
+Tarsier (Carlito syrichta),4460,0.57,mammal,primates
+Three-toed box turtle (Terrapene carolina triunguis),8311,0.34,chelarchosauria,NA
+Tiger (Panthera tigris altaica),1623,0.73,mammal,carnivore
+Tree Shrew (Tupaia belangeri),1497,0.64,mammal,other
+Tuatara (Sphenodon punctatus),4765,0.41,squamate,NA
+Turkey (Meleagris gallopavo),2420,0.36,chelarchosauria,NA
+Upper Galilee mountains blind mole rat (Nannospalax galili),2285,0.94,mammal,rodentia
+Vervet-AGM (Chlorocebus sabaeus),2462,0.93,mammal,primates
+White-tufted-ear marmoset (Callithrix jacchus),1947,0.40,mammal,primates
+Wild yak (Bos mutus),1598,0.88,mammal,cetartriodactyla
+Yarkand deer (Cervus hanglu yarkandensis),1560,0.61,mammal,cetartriodactyla
+Zebra finch (Taeniopygia guttata),1232,0.79,chelarchosauria,NA

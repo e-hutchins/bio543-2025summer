@@ -1,0 +1,163 @@
+---
+title: "R Exercise: Basic Data Analysis and Exploration"
+author: "Replace with your name"
+output:
+  pdf_document: default
+  html_document: default
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##Load packages
+
+Make sure to have the "ggplot2" package installed before knitting the RMarkdown file
+
+```{r}
+
+#install.packages("ggplot2")
+library(ggplot2)
+
+```
+
+##Data loading
+
+First we load the data from the "data.csv" file. This data includes information about the DNA sequence of the gene RAMP2 from different species of mammal, bird and reptile.
+
+#Make sure the data is located in the same folder than the RMarkdown file. If not, make sure to add the correct path to the data in the read.csv() command
+
+```{r}
+getwd()
+data <- read.csv("~/ASU Dropbox/Raul Araya Donoso/Docencia/Clases/ASU - BIO543/Development/module_1-9_data.csv")
+
+```
+We can check that the data was loaded correctly with the following commands. The dataset includes as variables the species name, the length in base pairs of the RAMP2 DNA sequence, the % of identity to the human RAMP2, the corresponding tetrapod lineage among mammal, Squamata (lizards and snakes) or Chelarcosauria (birds, turtles and crocodylians), and the mammal order (just indicated for mammals).
+
+```{r}
+
+names(data) #Shows the header
+
+head(data) #Shows first 6 rows
+
+tail(data) #Shows last 6 rows
+
+
+```
+
+
+## Get some basic information about the dataset
+
+Get the number of observations, number of variables
+
+```{r}
+
+#How many variables does the dataset have?
+
+ncol(data) #Gives you the number of columns in the dataframe
+
+#How many observations are there in the dataset?
+
+nrow(data) #Gives you the number of rows in the dataframe
+
+dim(data) #Dimensions of the dataset
+
+str(data) #Shows the general structure of the dataset. Each variable, and what type of variable it is (e.g. character, integer, numeric, etc)
+
+#What are the mean and median lengths of the RAMP2 gene for the entire dataset?
+
+summary(data) #Gives you a few summary statistics for the entire dataset
+
+
+```
+
+
+
+## Generating Plots
+
+We can also explore the data using plots
+
+```{r}
+
+#How is the distribution of the sequence length in basepairs for RAMP2 across vertebrates?
+
+hist(data$length_bp) #Generates a histogram
+
+ggplot(data, aes(x = length_bp)) + geom_histogram() + theme_minimal() #We can do more elaborated plots using ggplot!
+
+#What does the "theme_minimal()" argument do in our plot command?
+
+#How is the distribution of the sequence identity with human for RAMP2 across vertebrates?
+
+ggplot(data, aes(x = id_human)) + geom_histogram() + theme_minimal() 
+
+```
+
+##Assess relationships and patterns in your data
+
+We can also explore the data using plots
+
+```{r}
+
+#Are there any differences in the sequence length among the vertebrate lineages?
+
+boxplot(data$length_bp ~ data$lineage)
+
+ggplot(data, aes(x = lineage, y = length_bp, fill = lineage)) + geom_boxplot() + theme_minimal() #We can also try it with ggplot
+
+#Is there a relationship between the sequence length and the identity with the human RAMP2 gene sequence?
+
+plot(data$length_bp, data$id_human)
+
+ggplot(data, aes(x = length_bp, y = id_human)) + geom_point() + theme_minimal() 
+
+#What if we differentiate the lineages? Do you see any pattern now?
+
+ggplot(data, aes(x = length_bp, y = id_human, col = lineage)) + geom_point(size = 3) + theme_minimal() #note that we added the tem "col = lineage" in the plot command
+
+```
+
+##Subsetting the data
+
+Let's generate a new dataset that has only the observations from mammals.
+
+```{r}
+
+#Get dataset of mammals only
+
+mammals <- data[data$lineage == "mammal",] #We can use the brackets to get subsets of the data based on logical conditions
+
+#Check that we did it correctly
+
+head(mammals)
+dim(mammals) #Now the number of observations is lower than before
+
+```
+
+##Explore relationships within mammals
+
+```{r}
+
+#What are the mean and median sequence lengths for mammals?
+
+mean(mammals$length_bp)
+median(mammals$length_bp)
+
+#Which mammal order has the longest RAMP2 sequences?
+
+ggplot(mammals, aes(x = mammal_order, y = length_bp, fill = mammal_order)) + geom_boxplot(alpha = 0.5) + theme_minimal()
+
+#What does the "alpha = 0.5" argument do in the command?
+
+```
+
+
+##Now it's your turn
+
+Can you get the mean and median sequence lengths for RAMP2 in Squamata and Chelarchosauria?
+
+```{r}
+
+
+```
