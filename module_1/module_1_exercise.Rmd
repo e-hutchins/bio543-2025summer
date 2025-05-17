@@ -30,7 +30,7 @@ First we load the data from the "data.csv" file. This data includes information 
 
 ```{r}
 getwd()
-data <- read.csv("~/ASU Dropbox/Raul Araya Donoso/Docencia/Clases/ASU - BIO543/Development/module_1-9_data.csv")
+data <- read.csv("module_1/module_1_data.csv", header = TRUE, sep = ",") #Load the data. The header argument indicates that the first row of the file is a header with the variable names. The sep argument indicates that the file is separated by commas
 
 ```
 We can check that the data was loaded correctly with the following commands. The dataset includes as variables the species name, the length in base pairs of the RAMP2 DNA sequence, the % of identity to the human RAMP2, the corresponding tetrapod lineage among mammal, Squamata (lizards and snakes) or Chelarcosauria (birds, turtles and crocodylians), and the mammal order (just indicated for mammals).
@@ -84,13 +84,17 @@ We can also explore the data using plots
 
 hist(data$length_bp) #Generates a histogram
 
-ggplot(data, aes(x = length_bp)) + geom_histogram() + theme_minimal() #We can do more elaborated plots using ggplot!
+ggplot(data, aes(x = length_bp)) +
+  geom_histogram() +
+  theme_bw() #We can do more elaborated plots using ggplot!
 
-#What does the "theme_minimal()" argument do in our plot command?
+#What does the "theme_bw()" argument do in our plot command?
 
 #How is the distribution of the sequence identity with human for RAMP2 across vertebrates?
 
-ggplot(data, aes(x = id_human)) + geom_histogram() + theme_minimal() 
+ggplot(data, aes(x = id_human)) +
+  geom_histogram() +
+  theme_bw() 
 
 ```
 
@@ -104,17 +108,23 @@ We can also explore the data using plots
 
 boxplot(data$length_bp ~ data$lineage)
 
-ggplot(data, aes(x = lineage, y = length_bp, fill = lineage)) + geom_boxplot() + theme_minimal() #We can also try it with ggplot
+ggplot(data, aes(x = lineage, y = length_bp, fill = lineage)) +
+  geom_boxplot() +
+  theme_bw() #We can also try it with ggplot
 
 #Is there a relationship between the sequence length and the identity with the human RAMP2 gene sequence?
 
 plot(data$length_bp, data$id_human)
 
-ggplot(data, aes(x = length_bp, y = id_human)) + geom_point() + theme_minimal() 
+ggplot(data, aes(x = length_bp, y = id_human)) +
+  geom_point() +
+  theme_bw() 
 
 #What if we differentiate the lineages? Do you see any pattern now?
 
-ggplot(data, aes(x = length_bp, y = id_human, col = lineage)) + geom_point(size = 3) + theme_minimal() #note that we added the tem "col = lineage" in the plot command
+ggplot(data, aes(x = length_bp, y = id_human, col = lineage)) +
+  geom_point(size = 3) +
+  theme_bw() #note that we added the tem "col = lineage" in the plot command
 
 ```
 
@@ -146,7 +156,9 @@ median(mammals$length_bp)
 
 #Which mammal order has the longest RAMP2 sequences?
 
-ggplot(mammals, aes(x = mammal_order, y = length_bp, fill = mammal_order)) + geom_boxplot(alpha = 0.5) + theme_minimal()
+ggplot(mammals, aes(x = mammal_order, y = length_bp, fill = mammal_order)) +
+  geom_boxplot(alpha = 0.5) +
+  theme_bw()
 
 #What does the "alpha = 0.5" argument do in the command?
 
