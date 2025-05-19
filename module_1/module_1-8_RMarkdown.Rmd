@@ -1,0 +1,143 @@
+---
+title: "R basics"
+author: "Your name"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. R code chunks look like this:
+
+```{r}
+# Your code goes here.
+```
+
+# Basic R exercises
+Once you have completed all of the exercises below, use the Knit button to generate an html file with all of your code and output. Then submit both the html file and this R Markdown file on Canvas.  
+
+## Question 1
+What is the sex ratio at birth of red deer? You have data from six deer mothers on the sex of all their offspring, as follows:  
+Deer 1: 	3 female, 2 male  
+Deer 2: 	2 female, 5 male  
+Deer 3: 	1 female, 3 male  
+Deer 4: 	5 female, 4 male  
+Deer 5: 	4 female, 1 male  
+Deer 6: 	3 female, 2 male  
+Use the prompts in the code chunk below to write a script to analyze these data. For each comment, write the corresponding code immediately below, as in the first example.  
+
+```{r}
+# Store the data in two vectors, one for males and one for females.
+male <- c(2, 5, 3, 4, 1, 2)
+female <- c(3, 2, 1, 5, 4, 3)
+
+# Calculate the sex ratio for Deer 1. That is, what proportion of her offspring are female?
+female[1] / (male[1] + female[1])
+
+# Calculate the sex ratio for all of the deer mothers. Do this in one single R command; do not separately calculate the ratio for each mother.
+
+
+# Calculate the average sex ratio across the six mothers.
+
+```
+Do red deer appear to have an equal sex ratio at birth?  
+
+
+## Question 2
+Body mass index (BMI) is a measure of body weight designed to account for differences in height. It is equal to weight divided by height squared, with weight measured in kilograms and height in meters. You have data on the height and weight of ten people, as follows:  
+167 cm, 64 kg  
+175 cm, 72 kg  
+180 cm, 73 kg  
+155 cm, 65 kg  
+173 cm, 75 kg  
+185 cm, 74 kg  
+181 cm, 82 kg  
+163 cm, 69 kg  
+179 cm, 79 kg  
+170 cm, 72 kg  
+Put these data in a text editor (ie., BBEdit or Notepad++) and save it as a CSV file (comma separated values). Put the data in two columns, one for height and one for weight. Put variable labels in the first row of each column (i.e., 'height' and 'weight').  
+Use the prompts in the code chunk below to write a script to analyze these data.  
+
+```{r}
+# Show the current working directory.
+getwd()
+
+# Change the working directory to where the CSV file is located. You can do this either with the setwd() function or by using RStudio's Session menu.
+
+
+# Clear the workspace of any previously defined variables.
+
+
+# Read the data into a data frame.
+
+
+# Show the size of the data frame.
+
+
+# Show the names of the data frame's variables.
+
+
+# Calculate the average weight of the ten people.
+
+
+# Calculate the BMI of each person and store it in the data frame. Do this with one single command; do not separately calculate the BMI for each person. Don't forget that BMI expects height in meters, not centimeters.
+
+
+# Make a scatterplot of BMI vs. weight. Be sure to label the plot axes.
+
+```
+
+Does BMI appear to depend on weight?  
+
+
+## Question 3
+How fast does the concentration of a toxin in the bloodstream decrease? A typical pattern is that the concentration decreases by a fixed proportion each unit time (e.g., it goes down by half every 2 hours). File toxin.csv contains data on the concentration (in parts per million) of a toxin in the bloodstream of a rat, measured every hour for eight hours. Use the prompts in the code chunk below to write a script to analyze these data.  
+
+```{r}
+# Read the data into a data frame.
+
+
+# Plot toxin concentration over time.
+
+
+# Plot the logarithm of concentration over time.
+
+```
+
+How do the two plots compare?  
+
+
+
+## Question 4
+How do the weights of male and female monitor lizards compare? File lizards.csv contains the weights of ten male and ten female lizards (in kilograms). Use the prompts in the code chunk below to write a script to analyze these data.  
+
+```{r}
+# Read the data into a data frame.
+
+
+# Calculate the average weight of males and the average weight of females.
+
+
+# Make a bar plot showing the average weight of each sex.
+
+```
+
+Does one sex seem bigger?  
+
+
+## Question 5
+Can lion age be told by the amount of black pigmentation on the nose? File lions.csv contains the age (in years) and proportion of black pigmentation on the nose for 20 male lions. Use the prompts in the code chunk below to write a script to analyze these data. 
+
+```{r}
+# Read the data into a data frame.
+
+# Make a scatter plot of the relation between age and proportion of black pigmentation on the nose
+
+```
+
+Based on this plot, what can you say about the usefulness of nose pigmentation for estimating the age of male lions?  

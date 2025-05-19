@@ -30,7 +30,7 @@ First we load the data from the "data.csv" file. This data includes information 
 
 ```{r}
 getwd()
-data <- read.csv("module_1/module_1_data.csv", header = TRUE, sep = ",") #Load the data. The header argument indicates that the first row of the file is a header with the variable names. The sep argument indicates that the file is separated by commas
+data <- read.csv("module_1-9_data.csv", header = TRUE, sep = ",") #Load the data. The header argument indicates that the first row of the file is a header with the variable names. The sep argument indicates that the file is separated by commas
 
 ```
 We can check that the data was loaded correctly with the following commands. The dataset includes as variables the species name, the length in base pairs of the RAMP2 DNA sequence, the % of identity to the human RAMP2, the corresponding tetrapod lineage among mammal, Squamata (lizards and snakes) or Chelarcosauria (birds, turtles and crocodylians), and the mammal order (just indicated for mammals).
