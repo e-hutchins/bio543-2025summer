@@ -19,7 +19,7 @@ When you click the **Knit** button a document will be generated that includes bo
 ```
 
 # Basic R exercises
-Once you have completed all of the exercises below, use the Knit button to generate an html file with all of your code and output. Then submit both the html file and this R Markdown file on Canvas.  
+Once you have completed all of the exercises below, use the Knit button to generate an html file with all of your code and output.
 
 ## Question 1
 What is the sex ratio at birth of red deer? You have data from six deer mothers on the sex of all their offspring, as follows:  
