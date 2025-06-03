@@ -42,7 +42,7 @@ RNA-seq counts were generated after adapter trimming, quality filtering, and ali
 
 ```{r}
 # Load count matrix
-if (!file.exists("modencodefly_count_table.txt" || !file.exists("modencodefly_phenodata.txt"))) {
+if (!file.exists("modencodefly_count_table.txt") || !file.exists("modencodefly_phenodata.txt")) {
   stop("Data file not found. Make sure you're running this .Rmd script from the same directory as the data file. Download the data from the course GitHub repository, unzip Module_3-8_data.zip, and place it in the working directory, e.g. bio543-2025summer/module_3")
 }
 
