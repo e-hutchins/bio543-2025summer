@@ -1,0 +1,213 @@
+---
+title: "R exercise: RNASeq"
+author: "Replace with your name"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+### Background
+In Module 2, we explored gene regulation and chromatin context. In this exercise, we’ll apply those concepts by identifying genes whose expression levels differ across developmental stages in the fruit fly (*Drosophila melanogaster*) using RNA-seq data. When interpreting differentially expressed genes, consider how expression may be influenced by transcription factor activity, chromatin accessibility, or epigenetic regulation.
+
+### 0. Package installation and loading
+
+We will use the DESeq2 package for differential expression analysis, along with other packages for data handling and visualization. When using a new package, especially from Bioconductor, it can be useful to consult the vignette:
+https://bioconductor.org/packages/devel/bioc/vignettes/DESeq2/inst/doc/DESeq2.html
+
+```{r}
+# Uncomment the lines below if running on a new installation
+
+#if (!requireNamespace("BiocManager"))
+#  install.packages("BiocManager")
+
+#install.packages(tidyverse)
+#install.packages(ggplot2)
+#install.packages(RColorBrewer)
+#install.packages(pheatmap)
+#BiocManager::install(DESeq2)
+
+library(tidyverse)    # Data manipulation
+library(DESeq2)       # Differential expression analysis
+library(ggplot2)      # Data visualization
+library(RColorBrewer) # Color palettes
+library(pheatmap)     # Heatmap visualization
+```
+
+### 1. Data loading
+
+RNA-seq counts were generated after adapter trimming, quality filtering, and alignment to a reference genome. This dataset contains gene-level counts from *Drosophila* larvae at different developmental stages.
+
+```{r}
+# Load count matrix
+if (!file.exists("modencodefly_count_table.txt" || !file.exists("modencodefly_phenodata.txt"))) {
+  stop("Data file not found. Make sure you're running this .Rmd script from the same directory as the data file. Download the data from the course GitHub repository, unzip Module_3-8_data.zip, and place it in the working directory, e.g. bio543-2025summer/module_3")
+}
+
+count_table <- readr::read_tsv("modencodefly_count_table.txt")
+count_data <- count_table %>%
+  column_to_rownames(var = "gene")
+
+# Load phenotype data
+pheno_data <- readr::read_table("modencodefly_phenodata.txt")
+```
+
+### 2. Data processing
+
+We will compare gene expression between the **L1** and **L2** larval stages.
+
+```{r}
+# Define groups of interest
+groups_of_interest <- c("L1Larvae", "L2Larvae")
+
+# Subset samples and metadata
+columns_of_interest <- which(pheno_data$stage %in% groups_of_interest)
+grouping <- pheno_data %>% filter(stage %in% groups_of_interest)
+counts_of_interest <- count_data[, columns_of_interest]
+
+# Create DESeq2 dataset
+dds <- DESeqDataSetFromMatrix(countData = counts_of_interest,
+                              colData = grouping,
+                              design = ~ stage)
+```
+
+### 3. Run the differential expression analysis
+
+We then run the analysis with DESeq2. Results tables are generated using the function results, which extracts a results table with log2 fold changes, p-values and adjusted p-values. Note that the first stage listed in the contrast will be the **comparison group**, and the second will be the **reference group**. 
+
+```{r}
+# Run DESeq2 analysis
+dds <- DESeq(dds)
+
+resultsNames(dds) # lists the coefficients
+
+# Extract results (L2 compared to L1)
+res <- results(dds, contrast = c("stage", "L2Larvae", "L1Larvae"))
+```
+
+The output shows the log2 fold change of gene expression between both larval stages for each gene. This value represents how different is the expression of a particular gene between both treatments.
+
+### 4a. Examine the results
+```{r}
+#set the significance threshold
+sig_thresh <- 0.05 # set the significance threshold
+
+
+# View result summary
+summary(res)
+
+# Prepare tidy results and label significant genes
+result_df <- results(dds, contrast = c("stage", "L2Larvae", "L1Larvae"), tidy = TRUE) %>%
+  mutate(is_significant = padj < sig_thresh)
+```
+
+### 4b. Plot the results
+
+First, we can explore which genes are differentially expressed in L2 with respect to L1.
+
+```{r}
+# MA plot
+plotMA(res, ylim=c(-2,2),
+       alpha = sig_thresh)
+
+# Volcano plot, exclude NA values
+volcano_data <- result_df %>% filter(!is.na(padj))
+
+ggplot(volcano_data) +
+  aes(log2FoldChange, -log10(padj), color = is_significant) +
+  geom_point(alpha = 0.7) +
+  theme_bw() +
+  labs(title = "Volcano Plot", x = "Log2 Fold Change", y = "-log10(adjusted p-value)")
+
+```
+
+Optional: If you’d like to explore more customizable volcano plots, check out the EnhancedVolcano package.
+```{r}
+# BiocManager::install("EnhancedVolcano")
+
+# if (requireNamespace("EnhancedVolcano", quietly = TRUE)) {
+#   library(EnhancedVolcano)
+#   EnhancedVolcano(res,
+#       lab = rownames(res),
+#       x = 'log2FoldChange',
+#       y = 'padj',
+#       title = 'DE genes in L2 vs L1 larvae',
+#       pCutoff = sig_thresh,
+#       FCcutoff = 1.5)
+# } else {
+#   message("Install EnhancedVolcano with BiocManager::install('EnhancedVolcano') to run this plot.")
+# }
+```
+
+### 5. Explore sample similarity.
+
+```{r}
+
+# Variance-stabilizing transformation
+vsd <- vst(dds, blind = FALSE)
+
+# Calculate sample distances
+sampleDists <- dist(t(assay(vsd)))
+sampleDistMatrix <- as.matrix(sampleDists)
+rownames(sampleDistMatrix) <- paste(colnames(vsd), grouping$stage, sep = "-")
+colnames(sampleDistMatrix) <- NULL
+
+# Plot heatmap
+colors <- colorRampPalette(rev(brewer.pal(9, "Blues")))(255)
+pheatmap(sampleDistMatrix,
+         clustering_distance_rows = sampleDists,
+         clustering_distance_cols = sampleDists,
+         col = colors)
+
+```
+
+### 6. Investigate top differentially expressed genes between L2 and L1
+
+```{r}
+
+# Top overexpressed genes in L2 vs L1
+higher <- head(result_df[order(-result_df$log2FoldChange), ], 10)
+higher
+
+# Top underexpressed genes in L2 vs L1
+lower <- head(result_df[order(result_df$log2FoldChange), ], 10)
+lower
+
+```
+
+### 7. Visualize gene-specific expression
+Let's plot a specific gene from the top list:
+
+```{r}
+
+# Example: Visualize gene FBgn0038242
+plotCounts(dds, gene = "FBgn0038242", intgroup = "stage", returnData = TRUE) %>%
+  ggplot(aes(stage, count)) +
+  geom_boxplot(aes(fill = stage)) +
+  scale_y_log10() +
+  theme_bw() +
+  labs(title = "Expression of FBgn0038242", y = "Normalized Count (log10 scale)")
+
+
+```
+
+### 8. Your Turn
+Choose a different gene from the top 10 over- or under-expressed list and visualize its expression. Replace the gene ID in the code below.
+
+```{r}
+# Replace with a gene of your choice
+plotCounts(dds, gene = "FBgn0038242", intgroup = "stage", returnData = TRUE) %>%
+  ggplot(aes(stage, count)) +
+  geom_boxplot(aes(fill = stage)) +
+  scale_y_log10() +
+  theme_bw()
+
+```
+
+Then, visit FlyBase (https://flybase.org/) to learn more about the gene's function.
+**Does it have a known role in transcription, chromatin remodeling, or development?**
+
+### 9. Back to the Biology
+What might cause a gene to be differentially expressed between stages? Could it be a transcription factor? Changes in chromatin? A feedback loop? Something else? Consider how the gene's function might relate to its expression pattern.
