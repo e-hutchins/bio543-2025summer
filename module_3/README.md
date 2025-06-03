@@ -36,7 +36,7 @@ getwd()
 
 The .Rmd script includes a check that will stop with an error message if the required data files aren’t found in the same folder.
 
-Useful Resources
+## 📚 Useful Resources
  - DESeq2 Bioconductor vignette:
 https://bioconductor.org/packages/devel/bioc/vignettes/DESeq2/inst/doc/DESeq2.html
 
