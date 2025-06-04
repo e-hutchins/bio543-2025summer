@@ -20,14 +20,14 @@ https://bioconductor.org/packages/devel/bioc/vignettes/DESeq2/inst/doc/DESeq2.ht
 ```{r}
 # Uncomment the lines below if running on a new installation
 
-#if (!requireNamespace("BiocManager"))
+# if (!requireNamespace("BiocManager"))
 #  install.packages("BiocManager")
 
 #install.packages(tidyverse)
 #install.packages(ggplot2)
 #install.packages(RColorBrewer)
 #install.packages(pheatmap)
-#BiocManager::install(DESeq2)
+#BiocManager::install("DESeq2")
 
 library(tidyverse)    # Data manipulation
 library(DESeq2)       # Differential expression analysis
