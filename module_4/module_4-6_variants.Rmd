@@ -1,0 +1,200 @@
+---
+title: "R Exercise: Genetic Variation in Phytophthora infestans"
+author: "Replace with your name"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Background
+
+In this module, we examine genetic variation across multiple samples of *Phytophthora infestans*, the organism responsible for late potato blight. These variants were identified using high-throughput sequencing and are stored in a VCF (variant call format) file. By combining the variants with sequence and annotation data, we can visualize and interpret genomic regions of interest.
+
+Variant filtering and visualization are common first steps in population genomics, functional genomics, and medical genetics pipelines. This exercise walks through those steps using `vcfR`.
+
+
+
+## 0. Install (if needed) and Load Required Packages
+
+If this is your first time running this, uncomment and run the install lines:
+
+```{r}
+# install.packages("vcfR")
+# install.packages("dplyr")
+# install.packages("ape")
+```
+
+Then load the packages:
+
+```{r, message=FALSE}
+library(vcfR)   # for reading and processing VCF files
+library(dplyr)  # for data manipulation
+library(ape)    # for reading DNA sequences
+```
+
+
+
+## 1. Load Data from the pinfsc50 Dataset
+
+We will use a test dataset provided with the `vcfR` package that includes variant calls, genome sequence, and annotation.
+
+```{r}
+pkg <- "pinfsc50"
+
+vcf_file <- system.file("extdata", "pinf_sc50.vcf.gz", package = pkg)
+dna_file <- system.file("extdata", "pinf_sc50.fasta", package = pkg)
+gff_file <- system.file("extdata", "pinf_sc50.gff", package = pkg)
+
+vcf <- read.vcfR(vcf_file, verbose = FALSE)
+dna <- read.dna(dna_file, format = "fasta")
+gff <- read.table(gff_file, sep = "\t", quote = "")
+```
+
+
+
+## 2. Create and Process a chromR Object
+
+The `chromR` object integrates variant data (VCF), sequence data (FASTA), and annotations (GFF).
+
+```{r, message=FALSE}
+chrom <- create.chromR(name = "Supercontig", vcf = vcf, seq = dna, ann = gff)
+chrom <- proc.chromR(chrom, verbose = TRUE)
+
+# Visualize quality summaries across the chromosome
+plot(chrom)
+```
+
+### Plot Interpretation:
+> Describe what is being visualized in this plot. Which metric or summary is most informative for quality control?
+
+
+
+## 3. Visualize the Variant Landscape
+
+Use the `chromoqc()` function to explore the distribution of depth and quality scores.
+
+```{r}
+chromoqc(chrom, dp.alpha = 20)
+```
+
+### Plot Interpretation:
+> Do you observe any unusual regions in terms of sequencing depth or quality? Describe them briefly.
+
+
+
+## 4. Mask Low-Quality Variants
+
+Apply thresholds to remove poorly supported variants (aka "masking").
+
+```{r, message=FALSE}
+chrom <- masker(chrom, min_QUAL = 1, min_DP = 300, max_DP = 700, 
+                min_MQ = 59.9, max_MQ = 60.1)
+chrom <- proc.chromR(chrom, verbose = TRUE)
+chromoqc(chrom, dp.alpha = 20)
+```
+
+### Plot Interpretation:
+> What changed in the variant profile after masking?
+
+
+
+## 5. Zoom into a Region of Interest
+
+First, zoom into the high-density region between 200,000 and 300,000 bp:
+
+```{r}
+chromoqc(chrom, xlim = c(200000, 300000))
+```
+
+### Plot Interpretation:
+> What do you observe in this region?
+
+Now, try zooming in on a different region (e.g., 100,000 to 200,000 bp):
+
+```{r}
+chromoqc(chrom, xlim = c(100000, 200000))
+```
+
+### Plot Interpretation:
+> How does this region compare in terms of variant density and quality to the previous region?
+
+
+
+## 6. Identify Genes in These Regions
+
+### Finding Gene Names from GFF Attributes
+```{r}
+# Extract name and ID from the GFF attributes column,
+# and add these as columns in the gff object
+gff$gene_name <- sub(".*NAME=([^;]+);.*", "\\1", gff$V9)
+gff$gene_id <- sub(".*ID=([^;]+).*", "\\1", gff$V9)
+
+# Show a few examples with head()
+head(gff[, c("gene_name", "gene_id")])
+
+```
+
+### Example: Genes between 200,000 and 300,000 bp
+
+```{r}
+gff_zoom <- filter(gff, V5 < 300000 & V4 > 200000)
+head(gff_zoom[, c("V1", "V4", "V5", "gene_name")])
+
+#list unique gene names in this region
+unique(gff_zoom$gene_name)
+```
+
+> How many genes are in this region? Use columns V4 (start) and V5 (end) to describe the position of one or two genes.
+
+### Now try: Genes between 100,000 and 200,000 bp
+
+```{r}
+gff_other <- filter(gff, V5 < 200000 & V4 > 100000)
+head(gff_other[, c("V1", "V4", "V5", "gene_name")])
+
+#list unique gene names in this region
+unique(gff_other$gene_name)
+```
+
+> Are there more or fewer genes in this region compared to 200–300 kb?
+
+### Interpretation Note:
+In this fungal dataset, genes are identified using internal protein names (like "histone chaperone ASF1-like protein") and locus IDs (like "PITG_17091").
+
+On the exam, you’ll use the same strategy: filter the annotation file by region and extract gene info. However, in a human genome dataset, the names will look more familiar:
+
+Official gene symbols like LFNG
+
+Ensembl IDs like ENSG00000106003
+
+The process is the same: zoom in, filter, and extract.
+
+
+
+
+## 7. Back to the Biology
+
+> If this analysis were part of a plant pathology study, what follow-up experiments could be performed on the genes identified in a region with many variants?
+
+> How could this type of workflow (variant filtering + annotation) be applied in other species or research areas?
+
+
+
+
+## Optional Challenge
+
+Try modifying the `masker()` thresholds:
+
+```{r, message=FALSE}
+# Example: Lower minimum depth to 100
+chrom <- masker(chrom, min_QUAL = 1, min_DP = 100, max_DP = 700,
+                min_MQ = 59.9, max_MQ = 60.1)
+chrom <- proc.chromR(chrom)
+chromoqc(chrom, dp.alpha = 20)
+```
+
+> What do you notice? How does adjusting thresholds affect which variants remain?
