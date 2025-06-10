@@ -1,4 +1,3 @@
-
 # Module 4.6: R Exercise – Genetic Variation in *Phytophthora infestans*
 
 ## Overview
@@ -48,7 +47,7 @@ The data used in this module comes with the `vcfR` package - no external files a
     - [dev GitHub repo](https://github.com/emmanuelparadis/ape)
 - Reference Dataset: [Haas et al., Nature, 2009](https://www.nature.com/articles/nature08358) – *Genome sequence and analysis of the Irish potato famine pathogen*
 
-## Further Exploration of Variants with Bioconductor
+## Further Exploration of Variants with Bioconductor (beyond this exercise)
  - [Variant Annotation package](https://bioconductor.org/packages/release/bioc/html/VariantAnnotation.html)
     - [VariantAnnotation Introduction](https://www.bioconductor.org/packages/devel/bioc/vignettes/VariantAnnotation/inst/doc/VariantAnnotation.html)
     - [Using filterVcf() to Select Variants from VCF Files](https://bioconductor.org/packages/release/bioc/vignettes/VariantAnnotation/inst/doc/filterVcf.html)
