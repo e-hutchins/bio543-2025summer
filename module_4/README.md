@@ -37,8 +37,21 @@ The data used in this module comes with the `vcfR` package - no external files a
 
 ## 📚 Useful Resources
 
-- `vcfR` documentation: https://cran.r-project.org/web/packages/vcfR/vcfR.pdf
-- Bioconductor Variant Annotation Workflow: https://bioconductor.org/help/workflows/variantAnnotation/
-- Reference: Haas et al., Nature, 2009 – *Genome sequence and analysis of the Irish potato famine pathogen*
+- `VcfR`: a package to manipulate and visualize VCF data in R
+    - [Installation Instructions, Vignettes](https://github.com/knausb/vcfR?tab=readme-ov-file#download)
+    - [Reference Manual](https://cran.r-project.org/web/packages/vcfR/vcfR.pdf)
+    - [Documentation](https://github.com/knausb/vcfR_documentation)
+    - [GitHub repo](https://github.com/knausb/vcfR)
+- `ape`: Analysis of Phylogenetics and Evolution
+    - [Homepage](https://emmanuelparadis.github.io/)
+    - [Reference manual](https://cran.r-project.org/web/packages/ape/ape.pdf)
+    - [dev GitHub repo](https://github.com/emmanuelparadis/ape)
+- Reference Dataset: [Haas et al., Nature, 2009](https://www.nature.com/articles/nature08358) – *Genome sequence and analysis of the Irish potato famine pathogen*
+
+## Further Exploration of Variants with Bioconductor
+ - [Variant Annotation package](https://bioconductor.org/packages/release/bioc/html/VariantAnnotation.html)
+    - [VariantAnnotation Introduction](https://www.bioconductor.org/packages/devel/bioc/vignettes/VariantAnnotation/inst/doc/VariantAnnotation.html)
+    - [Using filterVcf() to Select Variants from VCF Files](https://bioconductor.org/packages/release/bioc/vignettes/VariantAnnotation/inst/doc/filterVcf.html)
+    - [ensemblVEP: using the REST API with Bioconductor](https://bioconductor.org/packages/release/bioc/vignettes/VariantAnnotation/inst/doc/ensemblVEP.html)
 
 For questions or help, post on Yellowdig, attend TA office hours, or contact your instructor.
