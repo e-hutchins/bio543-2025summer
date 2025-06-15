@@ -1,6 +1,7 @@
 #repo specific files
 exams/
 final_challenge/
+instructor_only/
 
 #if you use a Mac
 .DS_store
