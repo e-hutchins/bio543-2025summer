@@ -1,0 +1,227 @@
+---
+title: "R exercise: Phylograms"
+author: "Replace with your name"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Background
+In this exercise we will use the package "phangorn" which includes different methods to perform phylogenetic analysis in R. We'll build phylogenetic trees based on amino acid sequence alignments and evaluate them in an evolutionary context. This allows us to investigate evolutionary relationships among species and explore patterns of molecular conservation and divergence. In this exercise, you'll explore three methods for building phylogenetic trees from amino acid sequence alignments:
+ - *UPGMA* (a distance-based clustering method that assumes a molecular clock),
+ - *Neighbor-joining* (a distance-based method that does not assume a molecular clock), and
+ - *Maximum likelihood* (a model-based method for identifying the best tree given the data).
+
+## 0. Install (if needed) and load required packages
+
+If you have not installed the required packages, uncomment the lines below to install them. Otherwise, you can skip this step and just load the packages using the `library()` function.
+
+```{r, warning=FALSE, message=FALSE, results='hide'}
+# if (!requireNamespace("BiocManager"))
+#  install.packages("BiocManager")
+#
+#BiocManager::install("msa")
+#BiocManager::install("Biostrings")
+#install.packages("phangorn")
+#install.packages("phytools")
+```
+
+Load the packages:
+
+```{r, message=FALSE, results='hide'}
+library(Biostrings) # for handling biological sequences
+library(msa)        # for multiple sequence alignment
+library(phangorn)   # for phylogenetic analysis
+library(phytools)   # for phylogenetic tree visualization
+```
+
+
+## 1. Data loading
+
+We will analyze the amino acid sequence of the Insulin Growth Factor 1 (IGF1) protein, encoded by the *igf1* gene, from several vertebrate species.
+
+```{r}
+
+# Check for the file first
+stopifnot(file.exists("igf1.fasta"))
+
+# Load the sequences
+seqs <- readAAStringSet("igf1.fasta")
+seqs
+
+```
+
+## 2. Data processing: align sequences and convert to phyDat object
+
+For performing the phylogenetic analysis, we need to align our amino acid sequences and convert to the phyDat format.
+
+```{r}
+
+# Align sequences using ClustalOmega
+aln <- msa(seqs, method = "ClustalOmega")
+
+# Convert alignment to phyDat format (amino acids)
+aln <- as.phyDat(aln, type = "AA")
+
+```
+
+
+## 3. Generate distance matrix
+
+First, we will create a distance matrix that contains a numerical phylogenetic difference between taxa. `dist.ml()` uses DNA / AA sequences to compute distances under different substitution models. Several substitution models are supported (e.g., JC69, JTT, WAG, LG), which describe different assumptions about evolutionary rates and amino acid substitution probabilities. Both the UPGMA and Neighbor-joining methods will use this distance matrix to construct the phylogenetic trees.
+
+```{r}
+# Calculate distance matrix using maximum likelihood
+# The default substitution model is JC69 (Jukes-Cantor 1969)
+dist_mat <- dist.ml(aln, model = "JC69")
+```
+
+## 4. Method 1: UPGMA
+
+### UPGMA (unweighted pair group method with arithmetic mean; Sokal and Michener 1958)
+is a straightforward approach to constructing a phylogenetic tree from a distance matrix. UPGMA implicitly assumes a constant substitution rate, over time and phylogenetic lineages (known as the molecular clock hypothesis). This means it assumes evolution proceeds at a uniform rate, an assumption that is often violated. Because this assumption is often violated in real data, UPGMA is now primarily used for illustrative or teaching purposes rather than modern phylogenetic inference.
+#https://www.sciencedirect.com/topics/agricultural-and-biological-sciences/upgma
+
+### 4a. Generate a UPGMA tree
+`upgma()` is a wrapper function around `hclust()`, which performs hierarchical clustering based on a distance matrix. 
+
+```{r}
+# Generate UPGMA tree using average method
+# UPGMA is a wrapper function around hclust
+upgma_tree <- upgma(dist_mat,
+                    cluster="average")
+plot(upgma_tree, main="UPGMA phylogram")
+```
+
+### 4b. Bootstrap support for the UPGMA tree
+For the UPGMA method, we can estimate the support values for the nodes in our tree by running a bootstrap analysis. A high value means high confidence in that branch, while a low value represents low confidence in that branch.
+ - `pml` computes the likelihood of a phylogenetic tree given a sequence alignment and a model.
+ - `bootstrap.pml` performs (non-parametric) bootstrap analysis.
+ - `plotBS` plots a phylogenetic tree with the bootstrap values assigned to the (internal) edges.
+
+```{r, message=FALSE, results='hide', results='hide'}
+
+# pml computes the likelihood of a phylogenetic tree given a sequence alignment and a model. 
+fit_upgma <- pml(upgma_tree, aln)
+
+#this makes our results reproducible by using the same seed for the random number generator
+#this ensures you get the same bootstrap values each time
+set.seed(123)
+
+#Perform bootstrap analysis (default is 100 replicates)
+# default is 100 bootstrap samples
+bs_upgma <- bootstrap.pml(fit_upgma,
+                    bs = 100,
+                    optNni=TRUE)
+```
+
+```{r}
+# Plot the bootstrap support values on the tree
+treeBS_upgma <- plotBS(midpoint(fit_upgma$tree),
+                       bs_upgma,
+                       type = "phylogram",
+                       main="UPGMA phylogram (bootstrapped)")
+
+```
+
+## 5. Method 2: Neighbor-joining
+
+### 5a. Generate a Neighbor-joining tree and reroot on Homo sapiens
+The `NJ()` function performs the neighbor-joining tree estimation of Saitou and Nei (1987).
+
+```{r}
+nj_tree <- NJ(dist_mat)
+plot(nj_tree, main="Neighbor-joining phylogram")
+
+# Place the root of the tree on Homo sapiens
+# Get the tip index of Homo sapiens
+reroot_node <- which(nj_tree$tip.label == "igf1_Homo_sapiens")
+nj_tree_rooted <- reroot(nj_tree, reroot_node)
+plot(nj_tree_rooted, main = "Rerooted NJ phylogram on Homo sapiens")
+                                             
+```
+
+
+## 5b. Bootstrap support for the Neighbor-joining tree
+
+For the Neighbor-joining method, we can estimate the support values for the nodes in our tree by running a bootstrap analysis.
+
+```{r, message=FALSE, results='hide'}
+
+# pml computes the likelihood of a phylogenetic tree given a sequence alignment and a model. 
+fit_nj <- pml(nj_tree_rooted, aln)
+
+#this makes our results reproducible by using the same seed for the random number generator
+#this ensures you get the same bootstrap values each time
+set.seed(123)
+
+#Perform bootstrap analysis (default is 100 replicates)
+# default is 100 bootstrap samples
+bs_nj <- bootstrap.pml(fit_nj,
+                    bs = 100,
+                    optNni=TRUE)
+```
+
+```{r}
+# Plot the bootstrap support values on the tree
+treeBS <- plotBS(midpoint(fit_nj$tree),
+                 bs_nj,
+                 type = "phylogram",
+                 main="Neighbor-joining phylogram (bootstrapped)")
+
+```
+
+> Which relationships are or are not supported?
+
+## 6. Method 3: Maximum likelihood
+We can also generate a maximum likelihood tree by testing models with `modelTest()` and `pml_bb()`. This helps identify the best-fit evolutionary model for your data based based on the Bayesian information criterion (BIC).
+
+### 6a. Test different models
+
+```{r}
+#test different models
+mt <- modelTest(aln)
+
+# Select the best model based on Bayesian information criterion (BIC)
+fit_mt <- pml_bb(mt, control = pml.control(trace = 0))
+fit_mt
+
+plot(fit_mt, main="Maximum Likelihood phylogram")
+```
+
+```{r}
+bs_mt <- bootstrap.pml(fit_mt,
+                       bs=100,
+                       optNni=TRUE,
+    control = pml.control(trace = 0))
+
+```
+
+```{r}
+# Plot the bootstrap support values on the tree
+treeBS <- plotBS(midpoint(fit_mt$tree),
+                 bs_mt,
+                 type = "phylogram",
+                 main="Maximum Likelihood phylogram (bootstrapped)")
+```
+
+
+## Back to the Biology
+The *igf1* gene encodes a growth factor involved in development and metabolism across vertebrates. Comparing its protein sequence across species allows us to assess how evolutionary relationships shape molecular conservation and divergence.
+
+> Do the inferred relationships among species based on igf1 align with established vertebrate phylogeny?
+
+> Which relationships are or are not supported in the bootstrapped phylograms?
+
+> Are there any surprising groupings or low bootstrap support values?
+
+> Which method produced a tree most consistent with the accepted vertebrate phylogeny?
+
+> What might explain inconsistencies from a biological point of view (e.g., horizontal gene transfer, convergent evolution, or adaptive radiation)?
+
+> What might explain inconsistencies from a technical point of view (e.g., sequencing errors, incomplete lineage sorting, or alignment artifacts?)
+
