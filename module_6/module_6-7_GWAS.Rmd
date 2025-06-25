@@ -1,0 +1,347 @@
+---
+title: "R Module 6.7 exercise: GWAS"
+author: "Replace with your name"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Reminder: Knit this .Rmd file to PDF before submitting to Gradescope.
+
+## Background
+
+In this exercise, you will perform a genome-wide association study (GWAS) using publicly available genotype and phenotype data from rice (*Oryza sativa*).
+This module introduces you to:
+- Population structure analysis using PCA
+- GWAS using the rrBLUP package
+- Visualization of associations (Manhattan and QQ plots)
+- Identification of significant SNPs and export of results
+
+The trait of interest is flowering time in Arkansas, one of 34 measured phenotypes in this dataset.
+
+## 0. Install (if needed) and load required packages
+
+If you have not installed the required packages, uncomment the lines below to install them. Otherwise, you can skip this step and just load the packages using the `library()` function.
+
+```{r, warning=FALSE, message=FALSE, results='hide'}
+# if (!requireNamespace("BiocManager"))
+#  install.packages("BiocManager")
+# 
+# install.packages("rrBLUP")
+# install.packages("BGLR")
+# BiocManager::install("SNPRelate")
+# install.packages("dplyr")
+# install.packages("qqman")
+# install.packages("poolr")
+```
+
+
+Load the packages:
+
+```{r}
+library(rrBLUP)
+library(BGLR)
+library(SNPRelate)
+library(dplyr)
+library(qqman)
+library(poolr)
+```
+
+### 1. Data loading
+
+We will use publicly available genotype and phenotype data from 413 accessions of *Oryza sativa* (rice) available from http://ricediversity.org/data/index.cfm. This includes data for 44,100 SNPs from 413 accessions with 34 phenotypic traits.
+
+**Input Files:**
+- `sativas413.ped`: Genotype matrix in PLINK format.
+- `sativas413.fam`: Sample metadata (used for matching individuals).
+- `sativas413.map`: SNP information (chromosome, ID, position).
+- `RiceDiversity_44K_Phenotypes_34traits_PLINK.txt`: Trait data for 34 phenotypes.
+
+```{r}
+
+# Read the genotype data from the .ped file using a helper function.
+Geno <- read_ped("sativas413.ped")
+p = Geno$p         # Number of SNPs
+n = Geno$n         # Number of samples
+Geno = Geno$x      # Extract genotype matrix
+
+# Read metadata for samples and SNPs
+FAM <- read.table("sativas413.fam")  # Accession (sample) information
+MAP <- read.table("sativas413.map")  # SNP mapping information (chr, ID, pos)
+
+# Recode genotype values for compatibility:
+# PLINK coding: 0 = homozygous reference, 1 = heterozygous, 3 = homozygous alt, 2 = missing
+Geno[Geno == 2] <- NA  # Missing data becomes NA
+Geno[Geno == 0] <- 0   # Homozygous reference stays 0
+Geno[Geno == 1] <- 1   # Heterozygous stays 1
+Geno[Geno == 3] <- 2   # Homozygous alt becomes 2
+
+# Reshape genotype vector into a p × n matrix (SNPs × samples)
+Geno <- matrix(Geno, nrow = p, ncol = n, byrow = TRUE)
+
+# Transpose so rows = samples, columns = SNPs (standard for GWAS)
+Geno <- t(Geno)
+
+# Check resulting dimensions
+dim(Geno)
+
+# Read phenotype data from URL
+rice.pheno <- read.table(
+  "http://www.ricediversity.org/data/sets/44kgwas/RiceDiversity_44K_Phenotypes_34traits_PLINK.txt",
+  header = TRUE, stringsAsFactors = FALSE, sep = "\t"
+)
+
+# View first few rows and columns of the phenotype data
+rice.pheno[1:5, 1:5]
+dim(rice.pheno)
+```
+
+### 2. Data processing
+
+For processing the data we will filter our SNP dataset, and match the genetic and phenotypic data. We will focus our analysis in only one trait: the flowering time in Arkansas.
+
+First we select the variables of interest.
+
+```{r, message=FALSE}
+# Assign sample IDs to genotype matrix rows
+rownames(Geno) <- FAM$V2
+
+# Match sample IDs across phenotype and genotype
+matched_ids <- intersect(rownames(Geno), rice.pheno$NSFTVID)
+
+# Subset both matrices to only include matched samples
+Geno <- Geno[matched_ids, ]
+rice.pheno.sub <- rice.pheno[match(matched_ids, rice.pheno$NSFTVID), ]
+
+# Extract the target trait: Flowering time in Arkansas
+y <- matrix(rice.pheno.sub$Flowering.time.at.Arkansas, ncol = 1)
+rownames(y) <- rice.pheno.sub$NSFTVID
+
+# Filter out samples with missing phenotype values
+valid_idx <- which(!is.na(y))
+Geno <- Geno[valid_idx, ]
+y <- y[valid_idx, , drop = FALSE]
+
+# Impute missing genotype values using column means
+Geno <- apply(Geno, 2, function(col) ifelse(is.na(col), mean(col, na.rm = TRUE), col))
+
+```
+
+SNPs with low minor allele frequencies (e.g., <5%) may lead to unstable association estimates. 
+We filter out these SNPs from both the genotype and SNP metadata.
+
+```{r}
+# Calculate allele frequencies:
+# Each SNP's total allele count is divided by 2 × number of individuals (diploid)
+p <- colSums(Geno) / (2 * nrow(Geno))
+
+# Compute Minor Allele Frequency (MAF) for each SNP
+# If p > 0.5 (i.e., major allele freq), subtract from 1 to get minor allele freq
+maf <- ifelse(p > 0.5, 1 - p, p)
+
+# Identify SNPs with MAF < 0.05 (i.e., low-frequency variants)
+# These are typically removed to avoid unstable statistical estimates
+maf.index <- which(maf < 0.05)
+
+# Remove low-MAF SNPs from genotype matrix
+Geno1 <- Geno[, -maf.index]
+dim(Geno1)  # Dimensions after filtering
+
+# Reload SNP map data to filter it the same way
+MAP <- read.table("sativas413.map")
+dim(MAP)
+
+# Remove corresponding SNPs from the map file
+MAP1 <- MAP[-maf.index, ]
+dim(MAP1)
+```
+
+Finally, we combine our data into a genome data structure (GDS) object.
+SNPRelate uses GDS (Genomic Data Structure) to efficiently store and access large-scale genotype data.
+This allows fast computation of PCA, IBD, and LD pruning, especially for genome-wide datasets.
+
+```{r}
+# Convert genotype matrix to standard R matrix format
+Geno1 <- as.matrix(Geno1)
+
+# Extract sample IDs from row names
+sample <- row.names(Geno1)
+length(sample)  # Should equal number of individuals
+
+# Select a subset of SNPs for faster processing (e.g., 5,888 SNPs)
+# PCA and GDS creation are computationally expensive, so we limit the number
+Geno2 <- Geno1[, 1:5888]
+MAP2 <- MAP1[1:5888, ]  # Subset the SNP metadata to match
+
+# Assign SNP IDs to column names
+colnames(Geno2) <- MAP2$V2  # SNP IDs from MAP file
+snp.id <- colnames(Geno2)
+length(snp.id)
+
+# Create a GDS (Genomic Data Structure) file
+# This is a binary file format optimized for scalable analysis in SNPRelate
+# Arguments:
+# - genmat: genotype matrix
+# - sample.id: sample names
+# - snp.id: SNP names
+# - snp.chromosome: chromosome number
+# - snp.position: base-pair position
+# - snpfirstdim = FALSE means SNPs are columns (default layout)
+snpgdsCreateGeno(
+  "44k.gds",
+  genmat = Geno2,
+  sample.id = sample,
+  snp.id = snp.id,
+  snp.chromosome = MAP2$V1,
+  snp.position = MAP2$V4,
+  snpfirstdim = FALSE
+)
+
+# Open the newly created GDS file
+geno_44k <- snpgdsOpen("44k.gds")
+
+# Print a summary of the GDS file contents (samples, SNPs, chromosomes, etc.)
+snpgdsSummary("44k.gds")
+
+```
+
+
+### 3. Perform the analyses
+
+First, we perform Principal Component Analysis (PCA) using the SNPRelate package.
+This identifies population structure based on genetic similarity.
+
+```{r}
+
+# - We specify the SNPs used by giving colnames(Geno2)
+pca_result <- snpgdsPCA(geno_44k, snp.id = colnames(Geno2))
+
+# Create a data frame with the top 4 eigenvectors (principal components)
+# These represent axes of genetic variation
+pca <- data.frame(
+  sample.id = row.names(Geno2),
+  EV1 = pca_result$eigenvect[, 1],
+  EV2 = pca_result$eigenvect[, 2],
+  EV3 = pca_result$eigenvect[, 3],
+  EV4 = pca_result$eigenvect[, 4],
+  stringsAsFactors = FALSE
+)
+
+# Plot samples in PCA space using the first two components
+# Clustering in the plot may reflect population structure or relatedness
+plot(pca$EV2, pca$EV1, xlab = "eigenvector 1", ylab = "eigenvector 2")
+
+```
+
+> How are the genotypes of *O. sativa* structured? Do you see any clustering?
+
+
+
+Then we run the GWAS using the rrBLUP package.
+
+```{r}
+# Prepare genotype data for input to the rrBLUP::GWAS() function
+# - MAP2 contains SNP metadata: [1] chromosome, [2] SNP ID, [4] base-pair position
+# - Geno2 has genotype values coded as 0, 1, 2 (allele dosage)
+#   rrBLUP expects values coded as -1 (homozygous ref), 0 (heterozygous), 1 (homozygous alt),
+#   so we subtract 1 from each value before transposing
+geno_final <- data.frame(
+  marker = MAP2[, 2],
+  chrom = MAP2[, 1],
+  pos = MAP2[, 4],
+  t(Geno2 - 1),  # Recode and transpose so SNPs are rows and samples are columns
+  check.names = FALSE
+)
+
+dim(Geno2)  # Confirm dimensions of genotype data before transformation
+
+# Prepare phenotype data
+# - The phenotype must be in a data frame with one column matching sample IDs
+pheno_final <- data.frame(NSFTV_ID = rownames(y), y = y)
+
+# Run GWAS using the rrBLUP package
+# - min.MAF: filters SNPs with low minor allele frequency (<5%)
+# - P3D = TRUE: enables faster computation using pre-estimated variance components
+# - plot = FALSE: suppress default plotting
+GWAS <- GWAS(pheno_final, geno_final, min.MAF = 0.05, P3D = TRUE, plot = FALSE)
+
+# Estimate the effective p-value threshold for multiple testing correction
+# This is an approximate method assuming ~434 independent tests
+# (NOTE: This line approximates a Bonferroni-like threshold but isn't standard)
+p_threshold = (1 - (1 - 0.05))^1/434
+p_threshold
+
+# Clean up the GWAS results:
+# Some rows may have character "0" in the 'y' column (likely placeholder or error flag)
+# Filter them out before plotting or interpretation
+GWAS_1 <- GWAS %>% filter(y != "0")
+
+# Generate a QQ plot to check for inflation or deflation of p-values
+qq(GWAS_1$y, main = "QQ Plot of GWAS P-values")
+```
+
+### 4. Visualize the results
+
+We can now identify which loci are significantly associated with the flowering time in Arkansas.
+A Manhattan plot is a standard way to visualize GWAS results.
+Each dot represents a SNP, and the y-axis shows statistical significance.
+Peaks above the threshold suggest regions of the genome potentially associated with the trait.
+
+```{r}
+# View the list of SNPs with p-values below a chosen significance threshold
+# These SNPs are considered significantly associated with the trait of interest (flowering time in Arkansas)
+# We use a threshold of 1e-4 (0.0001) here for demonstration, though more stringent thresholds may be needed
+GWAS_1 %>% filter(y < 1e-04)
+
+# Export significant SNPs to CSV
+significant_snps <- GWAS_1 %>% filter(y < 1e-04)
+write.csv(significant_snps, "significant_snps_flowering_time.csv", row.names = FALSE)
+
+# Create a Manhattan plot to visualize GWAS results
+# - Each point is a SNP
+# - X-axis: Chromosomal position
+# - Y-axis: -log10(p-value), so more significant SNPs appear higher on the plot
+# - SNPs are colored by chromosome for visual clarity
+# - suggestiveline: horizontal line at -log10(1e-4) to highlight significant associations
+
+manhattan(
+  x = GWAS_1,
+  chr = "chrom",       # Chromosome column
+  bp = "pos",          # Base pair position
+  p = "y",             # P-value column (stored as 'y' from rrBLUP::GWAS)
+  snp = "marker",      # SNP ID
+  col = c("blue4", "orange3"),  # Alternating colors by chromosome
+  suggestiveline = -log10(1e-04),
+  logp = TRUE          # Plot -log10(p-value) instead of raw p-values
+)
+
+
+```
+
+
+### Back to the Biology
+Genome-wide association studies (GWAS) allow us to connect variation in genotype with variation in phenotype. In this case, you explored associations between SNP markers and flowering time in *Oryza sativa* (rice), an agriculturally important trait.
+
+Reflect on the following questions:
+
+> Were there SNPs significantly associated with flowering time in Arkansas?
+
+> Do the top hits cluster in specific chromosomal regions?
+
+> How might these associations inform our understanding of flowering time regulation in rice?
+
+> Did the PCA plot suggest underlying genetic substructure in the rice population?
+
+> How might rice breeders use this type of information to guide selection?
+
+> How many SNPs showed strong association with flowering time at the Arkansas site?
+
+> What additional steps would you take to validate these associations biologically (e.g., expression studies, CRISPR validation, linkage mapping, ATAC-Seq, RNA-Seq, eQTL)?
+
+GWAS is a powerful hypothesis-generating tool, but the results need to be interpreted in the context of biological function and validated through additional experiments.
+
+The significant SNPs you identified could be candidates for further investigation into the genetic control of flowering time in rice.
