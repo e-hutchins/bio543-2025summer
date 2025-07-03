@@ -1,0 +1,222 @@
+---
+title: "R exercise: Metagenomics"
+author: "Replace with your name"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 0. Install (if needed) and load required packages
+
+If you have not installed the required packages, uncomment the lines below to install them. Otherwise, you can skip this step and just load the packages using the `library()` function.
+
+```{r, warning=FALSE, message=FALSE, results='hide'}
+# if (!requireNamespace("BiocManager"))
+#  install.packages("BiocManager")
+# 
+# install.packages("ggplot2")
+# BiocManager::install("phyloseq")
+# install.packages("metacoder")
+# install.packages("vegan")
+# install.packages("RColorBrewer")
+```
+
+
+```{r, warning=FALSE, message=FALSE, results='hide'}
+library(ggplot2) 
+library(phyloseq)
+library(metacoder)
+library(vegan)
+library(RColorBrewer)
+```
+
+## 1. Data loading
+
+We will work with a test dataset of six samples of the human microbiome. These correspond to 3 samples from the gut and 3 from the skin.
+
+```{r}
+# Check if the biom file is present
+stopifnot(file.exists("Module_7-8_data/rich_sparse_otu_table.biom"))
+
+# Import biom file using phyloseq
+biom_file <- "Module_7-8_data/rich_sparse_otu_table.biom"
+qiime <- import_biom(biom_file)
+
+# Examine the structure of the data
+tax_table(qiime)   # taxonomic classifications
+otu_table(qiime)   # abundance data
+sample_data(qiime) # sample metadata
+```
+
+The metagenomic data includes:
+Taxonomy: classification of each OTU to genus/species level, to the most specific rank that could be identified
+Abundance: how many times each OTU was detected per sample
+OTUs (Operational Taxonomic Units): markers of microbial species/groups
+
+
+## 2. Data processing
+
+Often, metagenomic analyses require data filtering. For this we use a rarefaction analysis, which normalizes for sequencing depth, and then we remove OTUs with extremely low abundance from the analysis.
+
+```{r}
+# Check if higher-count biom file exists
+stopifnot(file.exists("Module_7-8_data/rich_high_count_otu.biom"))
+
+# Load more complete dataset using metacoder
+biom_file <- "Module_7-8_data/rich_high_count_otu.biom"
+taxdata <- parse_qiime_biom(biom_file)
+
+# View sequencing depth across samples
+sample_ids <- paste0("Sample", 1:6)
+hist_data <- colSums(taxdata$data$otu_table[, sample_ids])
+
+# Plot sequencing depth histogram with density overlay
+hist(hist_data, prob = TRUE, breaks = 3)
+lines(density(hist_data, adjust = 2), col = "red")
+
+# Rarefy the OTU table
+taxdata$data$rarefied_otus <- rarefy_obs(taxdata, "otu_table", other_cols = TRUE)
+
+# Filter out low-abundance OTUs (<= 20 total counts across samples)
+low_otu_index <- rowSums(taxdata$data$rarefied_otus[, sample_ids]) <= 20
+taxdata <- filter_obs(taxdata, "rarefied_otus", !low_otu_index)
+
+# Extract and reshape OTU table for analysis
+datos <- taxdata$data$otu_table[, sample_ids]
+datos <- t(datos)
+colnames(datos) <- taxdata$data$otu_table$otu_id
+datos
+```
+
+## 3. Data visualization
+
+Now we can visualize our data and compare our samples.
+
+### 3.1 Alpha Diversity
+
+First we can compare the alpha diversity (within-sample diversity) between skin and gut samples.
+
+```{r}
+
+# Plot Shannon and Simpson diversity indexes by sample type
+plot_richness(qiime, x = "Description", measures = c("Shannon", "Simpson")) +
+  geom_boxplot()
+
+```
+### 3.2 Beta Diversity and Heatmap
+
+We’ll cluster samples based on microbial community composition (beta diversity) using Bray–Curtis dissimilarity.
+
+```{r}
+
+# Normalize OTU counts by sample
+data.prop <- datos / rowSums(datos)
+
+# Compute Bray–Curtis dissimilarity and perform hierarchical clustering
+data.dist <- vegdist(data.prop, method = "bray")
+row.clus <- hclust(data.dist, method = "average")
+
+# Heatmap of relative abundances
+color <- colorRampPalette(c("#F7FBFF", "#084594"))(100)
+heatmap(as.matrix(data.prop),
+        Rowv = as.dendrogram(row.clus),
+        Colv = NA,
+        col = color,
+        margins = c(10, 7))
+
+```
+
+This heatmap shows the relative abundance of each OTU across samples. Samples with similar microbial profiles cluster together, revealing community-level patterns between skin and gut.
+
+
+### 3.3 Ordination Plot (PCoA)
+
+Principal Coordinates Analysis (PCoA) is an ordination method that helps visualize similarities or differences in community composition between samples.
+
+```{r}
+# Perform ordination using Bray-Curtis distances
+pcoa <- ordinate(qiime, method = "PCoA", distance = "bray")
+```
+
+Before we look at the results, let’s first investigate how much of the total distance structure we will capture in the first few axes. We can do this graphically with a “scree plot”, an ordered barplot of the relative fraction of the total eigenvalues associated with each axis.
+
+```{r}
+
+plot_scree(pcoa, "Scree plot, PCoA")
+```
+The first two axes represent 91.8% of the total variation in the distances. Interestingly, the third axis represents another 8.7%, and so may warrant exploration as well. A scree plot is an important tool for any ordination method, as the relative importance of axes can vary widely from one dataset to another.
+
+```{r}
+# Plot the ordination, coloring by sample type: axis 1 and axis 2
+plot_ordination(qiime, pcoa, color = "Description",
+                axes = c(1,2)) +
+  geom_point(size = 5) +
+  geom_path() +
+  geom_line() +
+  theme_bw() +
+  labs(title = "PCoA of Microbiome Composition",
+       color = "Sample Type")
+
+# Plot the ordination, coloring by sample type: axis 2 and axis 3
+plot_ordination(qiime, pcoa, color = "Description",
+                axes = c(1,3)) +
+  geom_point(size = 5) +
+  geom_path() +
+  geom_line() +
+  theme_bw() +
+  labs(title = "PCoA of Microbiome Composition",
+       color = "Sample Type")
+```
+
+The horizontal axis represents the first axis in the PCoA ordination, while the top and bottom vertical axes represent the second and third axes, respectively. Different points represent different samples within the dataset, and are shaded according to the environment category to which they belong. The color scheme is the default used by ggplot.
+
+### 3.4 Stacked Bar Plot of Taxa Abundance (Phylum Level)
+
+We can also look at the relative abundance of microbial taxa across samples, collapsed at the Phylum level.
+
+```{r}
+# Rename taxonomy columns to standard names for clarity
+colnames(tax_table(qiime)) <- c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species")
+
+# Strip prefixes like "p__", "c__" for cleaner plotting
+tax_table(qiime) <- apply(tax_table(qiime), 2, function(x) gsub("^[a-z]__*", "", x))
+
+
+# Merge at Phylum level
+qiime_phylum <- tax_glom(qiime, taxrank = "Phylum")
+
+# Transform counts to relative abundance
+qiime_phylum_rel <- transform_sample_counts(qiime_phylum, function(x) x / sum(x))
+
+# Plot stacked bar chart: fill by Phylum
+plot_bar(qiime_phylum_rel, 
+         x = "Sample", 
+         fill = "Phylum") +
+  theme_bw() +
+  facet_wrap(~Description, scales = "free_x") +
+  labs(title = "Stacked Bar Plot of Microbial Phyla",
+       x = "Sample",
+       y = "Relative Abundance",
+       fill = "Phylum") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+```
+
+
+### Back to the Biology
+The human microbiome plays a critical role in health and disease, with distinct microbial communities at different body sites. In this dataset, we compared gut and skin microbiome samples.
+
+> Alpha diversity plots showed differences in species richness and evenness between environments. Did one environment have greater microbial diversity?
+
+> Heatmaps and ordination plots revealed clustering of samples by community composition (beta diversity). Were gut samples more similar to each other than to skin samples? Did the ordination separate the two sample types?
+
+> The stacked bar plot visualized the relative abundance of bacterial phyla in each sample. Were certain phyla dominant in gut vs. skin? If so, which ones?
+
+These patterns reflect how environmental conditions (pH, moisture, oxygen, host tissue) shape microbial communities.
+
+Think about how these methods could be applied to other metagenomic studies. For example, comparing disease vs. healthy microbiomes, or studying microbial shifts in response to diet, antibiotics, infection, or extreme environments.
